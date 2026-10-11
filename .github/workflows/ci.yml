@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+      - portfolio-hardening
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run tests
+        env:
+          APP_ENV: test
+          SECRET_KEY: ci-test-secret
+          DATABASE_URL: "sqlite:///:memory:"
+        run: pytest -q
+
+      - name: Compile Python sources
+        run: python -m compileall app.py models.py tests
+
+      - name: Build Docker image
+        run: docker build -t stratospic:ci .
