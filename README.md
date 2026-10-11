@@ -1,137 +1,228 @@
 # StratosPic
 
-### Cloud-Optimized Photo Sharing Web Application
+**Cloud-deployed Python photo-sharing application with automated image analysis and NLP-based comment sentiment filtering.**
 
-StratosPic is an academic cloud-computing project designed to explore how a modern photo-sharing application can be built with scalability, reliability and containerised deployment in mind.
+StratosPic is a portfolio project demonstrating how application engineering, cloud services and lightweight AI/NLP components can be combined in a production-style Python web application.
 
-The project focuses on creating a cloud-native architecture capable of supporting media uploads, image browsing and user interaction while reducing some of the common scalability problems found in traditional web applications.
+It is intentionally positioned as a **cloud/application engineering project that supports an AI/ML portfolio** rather than as a deep computer-vision model.
 
-## Project Overview
+## What the application does
 
-Modern media applications need to handle large image files, increasing numbers of users and frequent application updates without causing unnecessary downtime.
+- User registration and authentication
+- Creator and consumer roles
+- Photo upload and profile management
+- Feed search, likes, saves and comments
+- Azure Blob Storage integration with local-development fallback
+- PostgreSQL support with SQLite fallback for development
+- Rule-based image metadata analysis with Pillow
+- TextBlob sentiment scoring for comment moderation
+- Health endpoint for deployment checks
+- Docker support
+- GitHub Actions CI
+- Optional Azure App Service deployment workflow
 
-StratosPic was designed around these challenges.
+## Technology stack
 
-The project explores a cloud-based architecture where the application backend can be packaged into containers, deployed to Microsoft Azure and connected to managed infrastructure such as PostgreSQL and virtual networking.
-
-The main areas explored in the project include:
-
-- Reliable media uploading and image viewing
-- User interaction and commenting
-- Scalable backend services
-- Containerised application deployment
-- Cloud networking and service isolation
-- Centralised container image management
-- Cloud-integrated intelligent processing
-
-## Technology Stack
-
-| Layer | Technology |
+| Area | Technology |
 |---|---|
-| Frontend | HTML5, CSS3, JavaScript |
-| Backend | Python, Flask REST API |
-| Database | PostgreSQL |
+| Backend | Python, Flask |
+| Database | PostgreSQL, SQLAlchemy |
+| Authentication | Flask-Login |
+| Security | Flask-WTF CSRF protection, secure cookies, upload validation |
+| Media | Pillow |
+| NLP | TextBlob sentiment analysis |
+| Storage | Azure Blob Storage |
+| Cloud | Microsoft Azure App Service |
 | Containerisation | Docker |
-| Cloud Platform | Microsoft Azure |
-| Networking | Azure Virtual Network |
-| Deployment | Azure App Service |
-| Container Management | Container Registry |
+| CI | GitHub Actions |
+| Production server | Gunicorn |
 
-## Cloud Architecture
+## Architecture
 
-StratosPic follows a cloud-oriented architecture using Microsoft Azure services.
+```text
+Browser
+   |
+   v
+Flask application
+   |---- Authentication / profiles
+   |---- Feed / likes / saves / comments
+   |---- Rule-based image analysis
+   |---- TextBlob sentiment scoring
+   |
+   +---- SQLAlchemy ----> PostgreSQL
+   |
+   +---- Media storage -> Azure Blob Storage
 
-The original design includes:
+GitHub Actions
+   |
+   +---- dependency installation
+   +---- automated tests
+   +---- Docker build validation
 
-**Azure Resource Group**  
-Groups the cloud resources used by the application.
+Manual deployment workflow
+   |
+   +---- Azure OIDC login
+   +---- Azure App Service
+```
 
-**Azure App Service**  
-Hosts the StratosPic web application.
+## AI / automation scope
 
-**PostgreSQL Database**  
-Provides persistent data storage for application information.
+### Image analysis
 
-**Azure Virtual Network**  
-Provides network isolation between cloud resources.
+The upload pipeline uses Pillow to calculate deterministic metadata such as:
 
-**Container Registry**  
-Stores versioned Docker images and supports controlled deployment and rollback.
+- image resolution category;
+- brightness;
+- dominant colour tone.
 
-## Containerisation
+This is **rule-based image analysis**, not a trained computer-vision model.
 
-The backend was designed around a container-first approach.
+### Comment sentiment
 
-Docker provides a consistent environment between development and deployment and reduces environment-specific configuration problems.
+Comments are scored with TextBlob polarity. Strongly negative comments can be rejected by a simple moderation rule.
 
-Containerisation also makes the architecture easier to scale horizontally as demand increases.
+TextBlob is used here as a lightweight NLP component. It is not presented as a modern transformer-based moderation system.
 
-## Problems Addressed
+## Security improvements
 
-The project was designed around several common challenges in media-heavy web applications:
+The portfolio-hardened version includes:
 
-| Challenge | StratosPic Approach |
+- no public hard-coded production secret;
+- mandatory `SECRET_KEY` when `APP_ENV=production`;
+- CSRF protection for state-changing requests;
+- HTTP-only and secure production cookies;
+- image extension and content validation;
+- upload size limits;
+- image pixel limits;
+- randomized stored filenames;
+- production-disabled debug endpoint;
+- basic password-length and input validation.
+
+## Local setup
+
+### 1. Clone the repository
+
+```bash
+git clone https://github.com/minhajul-abedin-ai/StratosPic.git
+cd StratosPic
+```
+
+### 2. Create a virtual environment
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+```
+
+On Windows:
+
+```powershell
+.venv\Scripts\activate
+```
+
+### 3. Install dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+### 4. Configure development environment
+
+Create a `.env` file:
+
+```env
+APP_ENV=development
+SECRET_KEY=replace-this-with-a-random-secret
+DATABASE_URL=sqlite:///instance/app.db
+```
+
+Azure storage is optional during local development.
+
+### 5. Run
+
+```bash
+flask --app app run
+```
+
+or:
+
+```bash
+python app.py
+```
+
+## Docker
+
+Build:
+
+```bash
+docker build -t stratospic .
+```
+
+Run:
+
+```bash
+docker run --rm -p 8000:8000 \
+  -e APP_ENV=production \
+  -e SECRET_KEY="replace-with-a-secure-secret" \
+  stratospic
+```
+
+For persistent production data, also configure PostgreSQL and Azure Blob Storage.
+
+## Tests
+
+```bash
+pytest -q
+```
+
+CI runs the test suite and validates the Docker build on pushes and pull requests.
+
+## Azure deployment
+
+The repository contains an Azure App Service deployment workflow.
+
+Deployment is **manual by design** because Azure OIDC credentials are environment-specific. The previous automatic deployment had a successful build but later failed at the Azure login step after the Azure credentials/configuration stopped validating.
+
+Before deploying, configure or refresh these repository secrets:
+
+- Azure client ID
+- Azure tenant ID
+- Azure subscription ID
+
+Then run the deployment workflow manually from GitHub Actions.
+
+## Production environment variables
+
+| Variable | Purpose |
 |---|---|
-| High concurrent traffic | Cloud-hosted, scalable backend architecture |
-| Large image files | Optimised media lifecycle design |
-| Backend workload | Elastic cloud services |
-| Deployment consistency | Docker containers |
-| Application updates | Version-controlled container deployment |
-| Service isolation | Azure networking architecture |
+| `APP_ENV=production` | Enables production security behaviour |
+| `SECRET_KEY` | Flask session/CSRF secret |
+| `DATABASE_URL` or `AZURE_POSTGRESQL_CONNECTIONSTRING` | Persistent database |
+| `AZURE_STORAGE_CONNECTION_STRING` | Blob Storage credentials |
+| `AZURE_CONTAINER_NAME` | Blob container name |
+| `MAX_UPLOAD_BYTES` | Optional upload-size override |
+| `MAX_IMAGE_PIXELS` | Optional image pixel-limit override |
 
-## Application Features
+## Portfolio value
 
-### Media Lifecycle
+StratosPic demonstrates that I can work beyond model experimentation and integrate software engineering around AI-related components:
 
-Supports the design of efficient uploading and viewing of high-resolution images while aiming to minimise unnecessary latency.
+- Flask application development
+- authentication and data modelling
+- PostgreSQL integration
+- cloud object storage
+- containerisation
+- CI/CD
+- security hardening
+- NLP component integration
+- deployment-oriented engineering
 
-### User Interaction
-
-The architecture supports social interaction around shared media, including commenting functionality.
-
-### Intelligent Operations
-
-The project also explores the use of cloud-integrated AI services to interpret user feedback and extend the platform beyond traditional media hosting.
-
-## Architecture Goals
-
-StratosPic was designed around three main goals:
-
-**Scalability** — allow the application architecture to respond to increasing workloads.
-
-**Reliability** — reduce disruption caused by application updates or infrastructure changes.
-
-**Portability** — use containerisation so application components can behave consistently across environments.
-
-## What I Learned
-
-This project helped me develop a stronger understanding of:
-
-Cloud application architecture, Microsoft Azure services, Python Flask development, Docker containerisation, PostgreSQL integration, virtual networking, scalable system design and cloud deployment concepts.
-
-It also helped me understand why modern applications need to be designed for scalability from the beginning rather than treating scalability as an afterthought.
-
-## Future Development
-
-The architecture could be extended further with automated CI/CD pipelines, object storage for large media files, CDN-based image delivery, monitoring and observability, authentication, automated scaling and more advanced AI-based media analysis.
-
-These are proposed portfolio extensions rather than claims about the original coursework implementation.
-
-## Project Background
-
-StratosPic was originally developed as an academic mini-project during my MSc Computer Science and Technology studies at Ulster University.
-
-This repository presents the project in a cleaner portfolio format while preserving the original cloud-architecture concept.
+For deeper machine-learning and explainable-AI work, see my other projects on my [GitHub profile](https://github.com/minhajul-abedin-ai).
 
 ## Author
 
-**Minhajul Abedin**
+**Minhajul Abedin**  
+AI / Machine Learning Engineer  
+London, United Kingdom
 
-MSc Computer Science and Technology  
-Ulster University, London
-
-GitHub: [minhajul-abedin-ai](https://github.com/minhajul-abedin-ai)
-
-## Repository
-
-https://github.com/minhajul-abedin-ai/StratosPic
+[GitHub](https://github.com/minhajul-abedin-ai) · [LinkedIn](https://www.linkedin.com/in/minhajulabedinai)
