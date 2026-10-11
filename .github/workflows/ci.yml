@@ -30,7 +30,7 @@ jobs:
         env:
           APP_ENV: test
           SECRET_KEY: ci-test-secret
-          DATABASE_URL: sqlite:///:memory:
+          DATABASE_URL: "sqlite:///:memory:"
         run: pytest -q
 
       - name: Compile Python sources
