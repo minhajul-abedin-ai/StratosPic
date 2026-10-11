@@ -5,6 +5,7 @@
         <div class="card border p-4 text-center">
             <h5 class="fw-bold mb-4">Create New Post</h5>
             <form method="POST" enctype="multipart/form-data">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <div class="mb-4 p-5 border border-2 border-dashed rounded bg-light">
                     <i class="far fa-images fs-1 text-muted mb-3"></i>
                     <input type="file" name="photo" class="form-control form-control-sm" required>
