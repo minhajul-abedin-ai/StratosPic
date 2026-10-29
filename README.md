@@ -6,6 +6,14 @@ StratosPic is a portfolio project demonstrating how application engineering, clo
 
 It is intentionally positioned as a **cloud/application engineering project that supports an AI/ML portfolio** rather than as a deep computer-vision model.
 
+## Start here
+
+**Try the full-stack application:** follow [Local setup](#local-setup) to run the Flask server, then see [Tests](#tests) for validation and [Azure deployment](#azure-deployment) for optional cloud setup.
+
+**What makes this project useful:** authentication, media uploads, relational data, Docker, and a cloud-oriented architecture. Its Pillow-based image metadata and TextBlob sentiment components are **lightweight rules and NLP scoring, not a trained computer vision model**.
+
+**More applied AI:** [Production RAG Evaluation Platform](https://github.com/minhajul-abedin-ai/Production-Rag-Evaluation-Platform) · [GitHub portfolio](https://github.com/minhajul-abedin-ai)
+
 ## What the application does
 
 - User registration and authentication
