@@ -291,13 +291,13 @@ def creator_dashboard():
 
     if request.method == "POST":
         try:
-            image = _validated_image(request.files.get("photo"))
-            file_url = _store_image(image, f"photo_{current_user.id}")
-            auto_tags = analyze_image(image)
-
             title = (request.form.get("title") or "").strip()
             if not title:
                 raise ValueError("A title is required.")
+
+            image = _validated_image(request.files.get("photo"))
+            auto_tags = analyze_image(image)
+            file_url = _store_image(image, f"photo_{current_user.id}")
 
             photo = Photo(
                 filename=file_url,
