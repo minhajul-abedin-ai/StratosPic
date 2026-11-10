@@ -195,3 +195,20 @@ def test_missing_title_does_not_write_image(monkeypatch):
     }, content_type="multipart/form-data")
     assert response.status_code == 200
     store.assert_not_called()
+
+
+def test_production_requires_persistent_database_config():
+    import subprocess
+
+    env = os.environ.copy()
+    env["APP_ENV"] = "production"
+    env["SECRET_KEY"] = "unit-test-secret"
+    env.pop("DATABASE_URL", None)
+    env.pop("AZURE_POSTGRESQL_CONNECTIONSTRING", None)
+    result = subprocess.run(
+        [sys.executable, "-c", "import app"],
+        cwd=str(Path(__file__).resolve().parents[1]),
+        env=env, capture_output=True, text=True,
+    )
+    assert result.returncode != 0
+    assert "must be configured in production" in result.stderr
