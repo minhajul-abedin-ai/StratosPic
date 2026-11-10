@@ -166,3 +166,32 @@ def test_invalid_upload_is_rejected():
 
     assert response.status_code == 200
     assert b"not a valid image" in response.data
+
+
+def test_missing_title_does_not_write_image(monkeypatch):
+    from unittest.mock import Mock
+    import app as app_module
+
+    with app.app_context():
+        user = User(username="creator_no_title", role="creator",
+                    password=generate_password_hash("StrongPass123"))
+        db.session.add(user)
+        db.session.commit()
+
+    client = app.test_client()
+    client.post("/login", data={
+        "username": "creator_no_title",
+        "password": "StrongPass123",
+        "role": "creator",
+    })
+    store = Mock(return_value="/fake-upload.jpg")
+    monkeypatch.setattr(app_module, "_store_image", store)
+    image = Image.new("RGB", (8, 8), (90, 20, 30))
+    buffer = io.BytesIO()
+    image.save(buffer, format="PNG")
+    buffer.seek(0)
+    response = client.post("/upload", data={
+        "photo": (buffer, "photo.png"), "title": "   ",
+    }, content_type="multipart/form-data")
+    assert response.status_code == 200
+    store.assert_not_called()
