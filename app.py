@@ -77,6 +77,10 @@ def _database_uri() -> str:
         "DATABASE_URL"
     )
     if not raw_conn:
+        if PRODUCTION:
+            raise RuntimeError(
+                "DATABASE_URL or AZURE_POSTGRESQL_CONNECTIONSTRING must be configured in production."
+            )
         os.makedirs(os.path.join(app.root_path, "instance"), exist_ok=True)
         uri = f"sqlite:///{os.path.join(app.root_path, 'instance', 'app.db')}"
         logger.warning(
@@ -291,13 +295,13 @@ def creator_dashboard():
 
     if request.method == "POST":
         try:
-            image = _validated_image(request.files.get("photo"))
-            file_url = _store_image(image, f"photo_{current_user.id}")
-            auto_tags = analyze_image(image)
-
             title = (request.form.get("title") or "").strip()
             if not title:
                 raise ValueError("A title is required.")
+
+            image = _validated_image(request.files.get("photo"))
+            auto_tags = analyze_image(image)
+            file_url = _store_image(image, f"photo_{current_user.id}")
 
             photo = Photo(
                 filename=file_url,
