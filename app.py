@@ -137,7 +137,14 @@ login_manager.login_view = "login"
 
 @login_manager.user_loader
 def load_user(user_id):
-    return db.session.get(User, int(user_id))
+    # Malformed or stale session identifiers must fail authentication safely.
+    try:
+        user_pk = int(user_id)
+    except (TypeError, ValueError, OverflowError):
+        return None
+    if user_pk <= 0:
+        return None
+    return db.session.get(User, user_pk)
 
 
 def _has_allowed_extension(filename: str) -> bool:

@@ -212,3 +212,27 @@ def test_production_requires_persistent_database_config():
     )
     assert result.returncode != 0
     assert "must be configured in production" in result.stderr
+
+
+def test_invalid_session_user_ids_fail_closed():
+    # Flask-Login can present old or malformed values stored in a session.
+    from app import load_user
+
+    with app.app_context():
+        for value in ("not-an-integer", None, "", "1.5", "-3"):
+            assert load_user(value) is None
+        assert load_user("999999") is None
+
+
+def test_numeric_session_user_id_still_resolves():
+    from app import load_user
+
+    with app.app_context():
+        user = User(
+            username="session_user",
+            role="consumer",
+            password=generate_password_hash("StrongPass123"),
+        )
+        db.session.add(user)
+        db.session.commit()
+        assert load_user(str(user.id)).id == user.id
